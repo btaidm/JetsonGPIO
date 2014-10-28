@@ -72,7 +72,7 @@ int gpio_unexport(unsigned int gpio)
 	int fd, len;
 	char buf[MAX_BUF];
 
-	fd = open(SYSFS_GPIO_DIR "/unexport", O_WRONLY);
+	fd = open(SYSFS_GPIO_DIR "/unexport", O_RDONLY);
 	if (fd < 0) {
 		perror("gpio/export");
 		return fd;
@@ -107,6 +107,41 @@ int gpio_set_dir(unsigned int gpio, PIN_DIRECTION out_flag)
 
 	close(fd);
 	return 0;
+}
+
+/****************************************************************
+ * gpio_get_dir
+ ****************************************************************/
+int gpio_get_dir(unsigned int gpio, PIN_DIRECTION* out_flag)
+{
+        int fd;
+        char buf[MAX_BUF];
+        char val;
+        int ret = 0;
+
+        snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
+
+        fd = open(buf, O_WRONLY);
+        if (fd < 0) {
+                perror("gpio/direction");
+                return fd;
+        }
+
+       switch(val)
+        {
+            case 'i':
+                *out_flag = INPUT_PIN;
+                break;
+            case 'o':
+                *out_flag = OUTPUT_PIN;
+                break;
+            default:
+                ret = 1;
+                break;
+        }
+        
+        close(fd);
+        return ret;
 }
 
 /****************************************************************
@@ -168,7 +203,7 @@ int gpio_get_value(unsigned int gpio, unsigned int *value)
  * gpio_set_edge
  ****************************************************************/
 
-int gpio_set_edge(unsigned int gpio, char *edge)
+int gpio_set_edge(unsigned int gpio, EDGE_DETECTION edge)
 {
 	int fd;
 	char buf[MAX_BUF];
@@ -180,11 +215,97 @@ int gpio_set_edge(unsigned int gpio, char *edge)
 		perror("gpio/set-edge");
 		return fd;
 	}
-
-	write(fd, edge, strlen(edge) + 1);
+        
+        switch (edge)
+        {
+            case NONE:
+                write(fd, "none", 5);
+                break;
+            case RISING:
+                write(fd, "rising", 7);
+                break;
+            case FALLING:
+                write(fd, "falling", 8);
+                break;
+            case BOTH:
+                write(fd, "both", 5);
+                break;
+        }
+	
 	close(fd);
 	return 0;
 }
+
+int gpio_get_edge(unsigned int gpio, EDGE_DETECTION *edge)
+{
+        int fd;
+        char buf[MAX_BUF];
+        char ed;
+        int ret = 0;
+        
+        snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/edge", gpio);
+
+        fd = open(buf, O_WRONLY);
+        if (fd < 0) {
+                perror("gpio/set-edge");
+                return fd;
+        }
+
+        read(fd, &ed, 1);
+        
+        switch(val)
+        {
+            case 'n':
+                *edge = NONE;
+                break;
+            case 'r':
+                *edge = RISING;
+                break;
+            case 'f':
+                *edge = FALLING;
+                break;
+            case 'b':
+                *edge = BOTH;
+                break;
+            default:
+                ret = 1;
+                break;
+        }
+        close(fd);
+        return ret;
+}
+
+/***************************************************************'
+ * gpio_active
+ ***************************************************************/
+
+int gpio_set_active(unsigned int gpio, ACTIVE active)
+{
+        int fd;
+        char buf[MAX_BUF];
+
+        snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/active_low", gpio);
+
+        fd = open(buf, O_WRONLY);
+        if (fd < 0) {
+                perror("gpio/set-edge");
+                return fd;
+        }
+        
+        switch (active)
+        {
+            case LOW:
+                write(fd, "1", 2);
+                break;
+            case HIGH:
+                write(fd, "0", 2);
+                break;
+        }
+        
+        close(fd);
+        return 0;
+}
+
 
 /****************************************************************
  * gpio_fd_open

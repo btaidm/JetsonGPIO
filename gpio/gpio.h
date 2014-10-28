@@ -45,26 +45,54 @@
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
 #define MAX_BUF 64
 
+
+
 enum PIN_DIRECTION{
-	INPUT_PIN=0,
-	OUTPUT_PIN=1
+    INPUT_PIN=0,
+    OUTPUT_PIN=1
 };
 
 enum PIN_VALUE{
-	LOW=0,
-	HIGH=1
+    LOW=0,
+    HIGH=1
 };
 
-/****************************************************************
- * gpio_export
- ****************************************************************/
+enum EDGE_DETECTION
+{
+    NONE=0,
+    RISING=1,
+    FALLING=2,
+    BOTH=3
+};
+
+enum ACTIVE
+{
+    LOW = 1,
+    HIGH = 0
+};
+
+enum 
+
 int gpio_export(unsigned int gpio);
 int gpio_unexport(unsigned int gpio);
 int gpio_set_dir(unsigned int gpio, PIN_DIRECTION out_flag);
+int gpio_get_dir(unsigned int gpio, PIN_DIRECTION* out_flag);
 int gpio_set_value(unsigned int gpio, PIN_VALUE value);
-int gpio_get_value(unsigned int gpio, unsigned int *value);
-int gpio_set_edge(unsigned int gpio, char *edge);
+int gpio_get_value(unsigned int gpio, PIN_VALUE *value);
+int gpio_set_edge(unsigned int gpio, EDGE_DETECTION edge);
+int gpio_get_edge(unsigned int gpio, EDGE_DETECTION* edge);
+int gpio_set_active(unsigned int gpio, ACTIVE active);
+int gpio_get_active(unsigned int gpio, ACTIVE* active);
+
 int gpio_fd_open(unsigned int gpio);
 int gpio_fd_close(int fd);
+
+#ifdef ASYNC
+typedef void (*gpio_func)(PIN_DIRECTION);
+int gpio_async_init(void);
+int gpio_set_async(unsigned int gpio, gpio_func gpio_callback);
+int gpio_disable_async(unsigned int gpio);
+int gpio_async_cleanup(void);
+#endif
 
 #endif /* SIMPLEGPIO_H_ */
